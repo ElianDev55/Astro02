@@ -1,0 +1,124 @@
+---
+import type { GetStaticPaths } from "astro";
+import MainLayout from '../../layouts/MainLayout.astro'
+import PokemonCard from '../../components/pokemons/PokemonCard.astro'
+import type { PokemonListResponse } from "../../interfaces/pokemon-list-response";
+import { Icon } from "astro-icon/components";
+
+export const getStaticPaths = ( async  () => {
+    
+    const resp = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
+    const { results } = await resp.json() as PokemonListResponse;
+    
+    return  results.map(
+        (pokemon) => (
+            { 
+                params: { name: pokemon.name, },
+                props: { url: pokemon.url }
+            }
+        )
+    );
+    
+    
+}) satisfies GetStaticPaths;
+
+const { name } = Astro.params;
+const { url } = Astro.props;
+const  id = url.split("/").at(-2);
+const audioUrl = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`;
+
+
+---
+
+<MainLayout 
+    title ={name}
+    description={`This is the page of ${name}`}
+    image={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`}
+>
+
+    <section class="mt-10 mx-10 flex flex-col justify-center items-center">
+        <div class="flex flex-row">
+            <div>
+                <button   class="btn mt-5" onclick="window.history.back()">Back</button>
+                <button  id="btn-fav" class="ml-4" data-name={name}  data-id={id}>
+                    <Icon data-nothing name="heart-nothing" size={50} class="text-red-600" />
+                    <Icon data-full name="heart-full" size={50} class="text-red-600 hidden" />
+                </button>
+            
+            </div>
+        </div>
+    
+
+        <PokemonCard name={name} url={url} isBig />
+    <audio class="mt-5" src={audioUrl} controls></audio>
+</section>
+
+</MainLayout>
+
+
+<script>
+    
+    interface FavoritePokemon {
+        name: string;
+        id : number;
+    }
+
+    const handlePageLoad = () =>  {
+        
+        let favPokemons: FavoritePokemon[] = JSON.parse(localStorage.getItem('favPokemons') || '[]');
+
+        const btnFav = document.querySelector("#btn-fav") as HTMLButtonElement;
+        
+        if(!btnFav) return;
+
+        const name = btnFav.dataset.name ?? '';
+        const id = btnFav.dataset.id ?? '';
+        const isFavorite = favPokemons.some(pokemon => pokemon.name === name);
+
+            const heartNothing = btnFav.querySelector('[data-nothing]') as HTMLElement;
+            const heartFull = btnFav.querySelector('[data-full]') as HTMLElement;
+
+            if(isFavorite){
+                heartNothing.classList.add('hidden');
+                heartFull.classList.remove('hidden');
+            }
+            
+
+            const toggleFavorite = () => {
+                const isFavorite = favPokemons.some(pokemon => pokemon.name === name);
+                if(isFavorite){
+                    favPokemons = favPokemons.filter(pokemon => pokemon.name !== name);
+                }else{
+                    favPokemons.push({
+                        id : +id,
+                        name : name
+                    });
+                }
+                localStorage.setItem('favPokemons', JSON.stringify(favPokemons));
+            }
+
+            btnFav.addEventListener('click', () => {
+                
+                heartNothing.classList.toggle('hidden');
+                heartFull.classList.toggle('hidden');
+                toggleFavorite();
+                
+            })
+    }
+
+
+    document.addEventListener('astro:page-load',handlePageLoad);
+
+
+
+
+</script>
+
+<style>
+    a {
+        @apply hover:underline text-blue-500;
+    }
+    #btn-fav{
+        @apply hover:animate-pulse;
+    }
+</style>
