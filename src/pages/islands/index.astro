@@ -2,25 +2,39 @@
 import MainLayout from '../../layouts/MainLayout.astro'
 import Title from '../../components/shared/Title.astro'
 import {Counter} from '../../components/Counter'
-import { FavoritePokemons } from '@components/pokemons/FavoritePokemons'
-const counter = 20
+
+const counter = 10
+
 ---
 
 
 <MainLayout title='Favorites'>
 
     <Title>
-        Favorites
+        Islas
     </Title>
-
-        
 
     <video controls="" autoplay="" transition:persist="video">
         <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
     </video>
-    
-    <FavoritePokemons client:only />
 
-   
+
+    <div
+    style={{
+        height: '2000px',
+        backgroundColor: 'red',
+        opacity: 0.4
+    }}
+    >
+
+    </div>
+
+    <Counter
+    transition:persist="props" 
+    transition:persist-props
+    client:visible 
+    initValue={counter}>
+    <Title>Counter</Title>
+    </Counter>
 
 </MainLayout>
